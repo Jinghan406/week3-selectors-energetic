@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+</head>
+<body>
+<title>Rally Selectors</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a sports poster. Cream paper with halftone, thick black outlines, hard offset shadows, cobalt and hot orange. Each card: a numbered black header, a big stage, a labelled list. Single bright look by choice. */
+:root {
+  --paper: #f4f0e6; --ink: #111111; --cobalt: #2c3bff; --orange: #ff5a1f; --lime: #c8ff2e; --grey: #6d6a63;
+  --display: "Anton", "Impact", "Haettenschweiler", "Arial Narrow Bold", sans-serif;
+  --mono: "DM Mono", ui-monospace, Menlo, monospace;
+  --b: 3px; --sh: 6px;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--mono); overflow-x: hidden;
+  background-image: radial-gradient(rgba(17,17,17,.09) 1px, transparent 1.4px); background-size: 9px 9px; }
+.wrap { max-width: 1128px; margin: 0 auto; padding-inline: max(16px, 4vw); padding-block: 48px 96px; display: flex; flex-direction: column; gap: 44px; }
+.top { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.eyebrow { font: 500 11px/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; margin: 0; }
+h1 { font: 400 clamp(72px, 13vw, 150px)/.85 var(--display); margin: 8px 0 0; letter-spacing: .01em; text-transform: uppercase; transform: skewX(-8deg); transform-origin: 0 100%;
+  color: var(--orange); -webkit-text-stroke: 3px var(--ink); text-shadow: 6px 6px 0 var(--ink); }
+.speed { font: 500 11px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink); background: var(--lime); border: var(--b) solid var(--ink); padding: 8px 12px; cursor: pointer; box-shadow: 4px 4px 0 var(--ink); }
+.speed[aria-pressed="true"] { background: var(--orange); color: #fff; }
+button:focus-visible { outline: 3px solid var(--cobalt); outline-offset: 3px; }
+
+.card { border: var(--b) solid var(--ink); background: var(--paper); box-shadow: 10px 10px 0 var(--ink); }
+.bar { display: flex; align-items: baseline; gap: 14px; padding: 8px 16px 6px; background: var(--ink); color: var(--paper); }
+.bar b { font: 400 34px/1 var(--display); color: var(--lime); }
+.bar h2 { font: 400 30px/1 var(--display); margin: 0; text-transform: uppercase; letter-spacing: .02em; }
+.bar span { margin-left: auto; font: 500 11px var(--mono); letter-spacing: .14em; text-transform: uppercase; color: #bdb9ae; }
+.body { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); }
+.stage { position: relative; min-height: 360px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 30px; cursor: pointer; overflow: hidden;
+  border-right: var(--b) solid var(--ink); -webkit-tap-highlight-color: transparent; background: #fbf8f1; }
+.stage::before { content: ""; position: absolute; inset: -40%; background: repeating-linear-gradient(-45deg, transparent 0 22px, rgba(44,59,255,.06) 22px 26px); pointer-events: none; }
+.stage .state { position: absolute; left: 16px; bottom: 14px; font: 400 18px var(--display); text-transform: uppercase; letter-spacing: .04em; }
+.stage .state em { font-style: normal; color: var(--orange); }
+.side { padding: 26px 26px; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+.list { list-style: none; margin: 0; padding: 0; position: relative; border-top: var(--b) solid var(--ink); }
+.list li { border-bottom: 1.5px solid var(--ink); }
+.row { display: flex; align-items: center; gap: 16px; min-height: 64px; padding: 0 6px; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
+.row .txt { flex: 1; min-width: 0; font: 400 20px/1.1 var(--display); text-transform: uppercase; letter-spacing: .02em; }
+.row .txt small { display: block; font: 400 11px/1.4 var(--mono); text-transform: none; letter-spacing: 0; color: var(--grey); margin-top: 3px; }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.ctl { position: relative; display: inline-block; flex: none; }
+.ctl input { position: absolute; inset: -6px; width: calc(100% + 12px); height: calc(100% + 12px); margin: 0; opacity: 0; cursor: pointer; z-index: 6; }
+.ctl:has(input:focus-visible) { outline: 3px solid var(--cobalt); outline-offset: 6px; }
+
+/* Slam — switch */
+.sw { width: 4em; height: 2em; }
+.sw-track { position: absolute; inset: 0; border: .1875em solid var(--ink); border-radius: 1em; background: #fff; overflow: hidden; box-shadow: var(--so, .25em) var(--so, .25em) 0 var(--ink); }
+.sw-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; background: var(--cobalt); transform-origin: 0 50%; }
+.sw-word { position: absolute; top: 50%; transform: translateY(-50%); font: 400 .78em/1 var(--display); letter-spacing: .04em; }
+.sw-word.off { right: .55em; color: var(--ink); } .sw-word.on { left: .55em; color: #fff; }
+.knob { position: absolute; left: 0; top: .25em; width: 1.5em; height: 1.5em; border-radius: 50%; background: var(--ink); border: .1875em solid var(--ink); z-index: 2; transform-origin: 50% 50%; }
+.knob::after { content: ""; position: absolute; left: 22%; top: 18%; width: 28%; height: 22%; border-radius: 50%; background: rgba(255,255,255,.55); transform: rotate(-30deg); }
+.speedline { position: absolute; height: .14em; border-radius: .1em; background: var(--ink); opacity: 0; z-index: 1; }
+
+/* Stamp — checkbox */
+.cb { width: 1.75em; height: 1.75em; }
+.cb-box { position: absolute; inset: 0; border: .1875em solid var(--ink); background: #fff; box-shadow: var(--so, .25em) var(--so, .25em) 0 var(--ink); transform-origin: 50% 50%; }
+.cb svg { position: absolute; inset: -6%; width: 112%; height: 112%; overflow: visible; }
+.ray { position: absolute; left: 50%; top: 50%; width: .16em; height: .55em; margin-left: -.08em; background: var(--orange); border-radius: .08em; transform-origin: 50% 0; opacity: 0; }
+.ray:nth-child(even) { background: var(--cobalt); }
+
+/* Bounce — radio */
+.rd { width: 1.5em; height: 1.5em; }
+.rd-ring { position: absolute; inset: 0; border-radius: 50%; border: .1875em solid var(--ink); background: #fff; box-shadow: .18em .18em 0 var(--ink); transform: scale(var(--rs, 1)); }
+.ballayer { position: absolute; inset: 0; pointer-events: none; z-index: 5; overflow: visible; }
+.ball { position: absolute; left: 0; top: 0; border-radius: 50%; background: var(--orange); border: .14em solid var(--ink); }
+.ripple { position: absolute; left: 0; top: 0; border-radius: 50%; border: .12em solid var(--orange); opacity: 0; }
+.shadowdot { position: absolute; left: 0; top: 0; border-radius: 50%; background: rgba(17,17,17,.18); }
+
+/* spec */
+.spec { border: var(--b) solid var(--ink); background: var(--ink); color: var(--paper); box-shadow: 10px 10px 0 var(--orange); padding: 28px clamp(18px, 4vw, 40px) 34px; }
+.spec h2 { font: 400 44px/1 var(--display); text-transform: uppercase; margin: 0 0 20px; color: var(--lime); }
+.sgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 26px 30px; }
+.sgrid h3 { font: 400 20px var(--display); text-transform: uppercase; margin: 0 0 10px; padding-bottom: 6px; border-bottom: 2px solid var(--paper); letter-spacing: .02em; }
+.sgrid dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font: 400 12px/1.5 var(--mono); }
+.sgrid dt { color: #a9a59a; } .sgrid dd { margin: 0; font-variant-numeric: tabular-nums; min-width: 0; }
+.sw8 { display: inline-block; width: 11px; height: 11px; border: 1.5px solid var(--paper); vertical-align: -1px; margin-right: 6px; }
+
+.shake { animation: shake .18s linear; }
+@keyframes shake { 20% { transform: translate(3px, -1px) rotate(.4deg); } 40% { transform: translate(-3px, 1px); } 60% { transform: translate(2px, 0) rotate(-.3deg); } 80% { transform: translate(-1px, 1px); } }
+@media (max-width: 760px) { .body { grid-template-columns: 1fr; } .stage { border-right: 0; border-bottom: var(--b) solid var(--ink); min-height: 300px; } .side { padding: 16px; } .card { box-shadow: 6px 6px 0 var(--ink); } }
+@media (prefers-reduced-motion: reduce) { .shake { animation: none; } }
+</style>
+
+<main class="wrap">
+  <div class="top">
+    <header>
+      <p class="eyebrow">Advanced Interface · Week 3 · Selectors · Set 04 · Energetic</p>
+      <h1>Rally</h1>
+    </header>
+    <button type="button" class="speed" id="speed" aria-pressed="false">Slow motion 0.25×</button>
+  </div>
+
+  <section class="card" aria-labelledby="h-sw">
+    <div class="bar"><b>01</b><h2 id="h-sw">Slam</h2><span>Switch</span></div>
+    <div class="body">
+      <label class="stage" id="sw-stage"><span class="vh">Turbo</span><span class="state" id="sw-state"></span></label>
+      <div class="side"><ul class="list" id="sw-list"></ul></div>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="h-cb">
+    <div class="bar"><b>02</b><h2 id="h-cb">Stamp</h2><span>Checkbox</span></div>
+    <div class="body">
+      <label class="stage" id="cb-stage"><span class="vh">I'm in</span><span class="state" id="cb-state"></span></label>
+      <div class="side"><ul class="list" id="cb-list"></ul></div>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="h-rd">
+    <div class="bar"><b>03</b><h2 id="h-rd">Bounce</h2><span>Radio button</span></div>
+    <div class="body">
+      <div class="stage" id="rd-stage" role="radiogroup" aria-label="Pace"><span class="state" id="rd-state"></span></div>
+      <div class="side"><ul class="list" id="rd-list" role="radiogroup" aria-labelledby="h-rd"></ul></div>
+    </div>
+  </section>
+
+  <section class="spec" aria-label="Spec">
+    <h2>Spec sheet</h2>
+    <div class="sgrid">
+      <div><h3>Kit</h3><dl>
+        <dt>Paper</dt><dd>#F4F0E6 · halftone 9 px</dd>
+        <dt>Colours</dt><dd><span class="sw8" style="background:#111"></span>#111111 <span class="sw8" style="background:#2C3BFF"></span>#2C3BFF<br><span class="sw8" style="background:#FF5A1F"></span>#FF5A1F <span class="sw8" style="background:#C8FF2E"></span>#C8FF2E</dd>
+        <dt>Outline</dt><dd>3 black on every control</dd>
+        <dt>Shadow</dt><dd>hard offset 4, no blur</dd>
+        <dt>Labels</dt><dd>Anton 20 / 22 · caps</dd>
+        <dt>Notes</dt><dd>DM Mono 11 / 15</dd>
+        <dt>Rows</dt><dd>64 min · gap 16 · rule 1.5</dd>
+        <dt>Focus</dt><dd>3 solid cobalt · offset 6</dd>
+      </dl></div>
+      <div><h3>Slam · switch</h3><dl>
+        <dt>Track</dt><dd>64 × 32 · radius 16 · stroke 3</dd>
+        <dt>Knob</dt><dd>Ø24 · travel 32</dd>
+        <dt>Off</dt><dd>white track, black knob, OFF</dd>
+        <dt>On</dt><dd>cobalt wipe follows the knob, orange knob, ON</dd>
+        <dt>Motion</dt><dd>knob k900 c26 · stretch with speed up to 160%</dd>
+        <dt>Impact</dt><dd>squash 70% on the wall, card shake 180 ms</dd>
+        <dt>Hover</dt><dd>knob revs (jitter 1.5), shadow 4 → 6</dd>
+        <dt>Press</dt><dd>knob winds back 4 before the slam</dd>
+      </dl></div>
+      <div><h3>Stamp · checkbox</h3><dl>
+        <dt>Box</dt><dd>28 × 28 · stroke 3 · square</dd>
+        <dt>Off</dt><dd>white, shadow 4</dd>
+        <dt>On</dt><dd>cobalt, white check 4, shadow 0</dd>
+        <dt>Motion</dt><dd>lifts to 135%, −10°, slams k700 c18</dd>
+        <dt>Burst</dt><dd>8 rays orange / cobalt, 380 ms</dd>
+        <dt>Hover</dt><dd>tilts 6°, shadow 4 → 7</dd>
+        <dt>Press</dt><dd>pushed into the paper, shadow 0</dd>
+      </dl></div>
+      <div><h3>Bounce · radio</h3><dl>
+        <dt>Ring</dt><dd>Ø24 · stroke 3 · shadow 3</dd>
+        <dt>Ball</dt><dd>Ø12 orange · stroke 2</dd>
+        <dt>Off / On</dt><dd>empty ring / ball in the ring</dd>
+        <dt>Change</dt><dd>ball jumps an arc, 460 ms, peak 1.6 × gap</dd>
+        <dt>Squash</dt><dd>take-off and landing 60%</dd>
+        <dt>Landing</dt><dd>ring dents to 88%, orange ripple</dd>
+        <dt>Hover</dt><dd>target ring 112%, ball hops in place</dd>
+      </dl></div>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const S = { speed: 1 };
+  const R = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  class Sp { constructor(x, k, c) { this.x = this.t = x; this.v = 0; this.k = k; this.c = c * (R ? 2.2 : 1); }
+    step(h) { this.v += (this.k * (this.t - this.x) - this.c * this.v) * h; this.x += this.v * h; } }
+  const shake = el => { if (R) return; el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); };
+  class Base { constructor(zone, input) { this.input = input; this.hov = 0; this.prs = 0; this.on = input.checked; this.time = 0;
+      zone.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') this.hov = 1; });
+      zone.addEventListener('pointerleave', () => { this.hov = 0; this.prs = 0; });
+      zone.addEventListener('pointerdown', () => this.prs = 1);
+      addEventListener('pointerup', () => this.prs = 0);
+      input.addEventListener('focus', () => { if (input.matches(':focus-visible')) this.hov = 1; });
+      input.addEventListener('blur', () => this.hov = 0);
+      input.addEventListener('change', () => { this.on = input.checked; this.changed && this.changed(); }); } }
+
+  /* ---- Slam ---- */
+  class Slam extends Base {
+    constructor(host, zone, input, size, shaker) { super(zone, input); this.shaker = shaker;
+      const el = this.el = document.createElement('span'); el.className = 'ctl sw'; el.style.fontSize = size + 'px';
+      el.innerHTML = `<span class="sw-track"><span class="sw-fill"></span><span class="sw-word off">OFF</span><span class="sw-word on">ON</span></span>` + '<span class="speedline"></span>'.repeat(3) + `<span class="knob"></span>`;
+      el.appendChild(input); input.setAttribute('role', 'switch'); host.appendChild(el);
+      this.knob = el.querySelector('.knob'); this.fill = el.querySelector('.sw-fill'); this.track = el.querySelector('.sw-track'); this.lines = [...el.querySelectorAll('.speedline')];
+      this.wOff = el.querySelector('.off'); this.wOn = el.querySelector('.on');
+      this.x = new Sp(this.on ? 1 : 0, 900, 26); this.so = new Sp(.25, 400, 20); this.hit = 0; this.armed = false; }
+    changed() { this.armed = true; }
+    tick(h) { this.time += h; const t = this.on ? 1 : 0;
+      this.x.t = this.prs ? (this.on ? 1.08 : -.08) : t;
+      this.x.step(h);
+      if (this.armed && Math.abs(this.x.x - t) < .03) { this.armed = false; this.hit = 1; if (this.shaker) shake(this.shaker); }
+      this.hit = Math.max(0, this.hit - h * 6);
+      this.so.t = this.prs ? 0 : (this.hov ? .38 : .25); this.so.step(h); }
+    render() { const x = clamp(this.x.x, -.15, 1.15), v = this.x.v, sp = clamp(Math.abs(v) / 9, 0, 1);
+      const jit = this.hov && !this.prs ? Math.sin(this.time * 70) * .05 : 0, wind = this.prs ? (this.on ? -.18 : .18) * 0 : 0;
+      const sx = 1 + .6 * sp + (this.prs ? -.12 : 0) - .3 * this.hit * 0, sy = 1 - .3 * sp + (this.prs ? .12 : 0);
+      const squash = this.hit;
+      this.knob.style.transform = `translateX(${.25 + x * 2 + jit + wind}em) scale(${(sx - .3 * squash).toFixed(3)}, ${(sy + .25 * squash).toFixed(3)})`;
+      this.knob.style.background = this.on ? 'var(--orange)' : 'var(--ink)';
+      this.fill.style.transform = `scaleX(${(clamp((1 + 2 * x) / 4 + .25 * x) * clamp(x * 4)).toFixed(4)})`;
+      this.wOff.style.opacity = 1 - clamp(x * 1.5); this.wOn.style.opacity = clamp(x * 1.5 - .5);
+      this.lines.forEach((l, i) => { const dir = v > 0 ? -1 : 1, len = (.5 + .35 * i) * sp;
+        Object.assign(l.style, { width: len + 'em', top: (.6 + i * .38) + 'em', left: `${.25 + x * 2 + .75 + dir * (.95 + len / 2) - len / 2}em`, opacity: sp > .08 ? sp : 0 }); });
+      this.track.style.setProperty('--so', this.so.x.toFixed(3) + 'em');
+      this.el.style.transform = this.hov && !this.prs ? `rotate(${-2 + Math.sin(this.time * 9) * .4}deg)` : '';
+      this.input.setAttribute('aria-checked', this.on); }
+    label() { return this.on ? (Math.abs(this.x.x - 1) < .02 ? 'On <em>!</em>' : 'Slam!') : (Math.abs(this.x.x) < .02 ? 'Off' : 'Back!'); }
+  }
+
+  /* ---- Stamp ---- */
+  class Stamp extends Base {
+    constructor(host, zone, input, size, shaker) { super(zone, input); this.shaker = shaker;
+      const el = this.el = document.createElement('span'); el.className = 'ctl cb'; el.style.fontSize = size + 'px';
+      el.innerHTML = '<span class="ray"></span>'.repeat(8) + `<span class="cb-box"></span><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M6.5 14.5l5 5L22 8.5" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/></svg>`;
+      el.appendChild(input); host.appendChild(el);
+      this.box = el.querySelector('.cb-box'); this.path = el.querySelector('path'); this.rays = [...el.querySelectorAll('.ray')];
+      this.sc = new Sp(1, 700, 18); this.rot = new Sp(0, 500, 16); this.ink = new Sp(this.on ? 1 : 0, 300, 30); this.so = new Sp(this.on ? 0 : .25, 500, 24); this.burst = -1; this.phase = 0; }
+    changed() { if (this.on) { this.sc.x = 1.35; this.sc.v = 0; this.rot.x = -10; this.phase = .1; } else { this.sc.v = 8; this.rot.v = 120; } }
+    tick(h) { this.time += h;
+      if (this.phase > 0) { this.phase -= h; if (this.phase <= 0) { this.burst = 0; if (this.shaker) shake(this.shaker); } }
+      this.sc.t = this.phase > 0 ? 1.35 : (this.prs ? .94 : 1); this.sc.step(h);
+      this.rot.t = this.phase > 0 ? -10 : (this.hov && !this.prs ? 6 : 0); this.rot.step(h);
+      this.ink.t = this.on && this.phase <= 0 ? 1 : 0; this.ink.step(h);
+      this.so.t = this.prs || (this.on && this.phase <= 0) ? 0 : (this.phase > 0 ? .5 : (this.hov ? .44 : .25)); this.so.step(h);
+      if (this.burst >= 0) { this.burst += h; if (this.burst > .5) this.burst = -1; } }
+    render() { const k = clamp(this.ink.x);
+      this.box.style.transform = `scale(${this.sc.x.toFixed(4)}) rotate(${this.rot.x.toFixed(2)}deg)`;
+      this.path.parentNode.style.transform = this.box.style.transform;
+      this.box.style.background = k > .01 ? (k < .5 ? 'var(--orange)' : 'var(--cobalt)') : '#fff';
+      this.box.style.setProperty('--so', this.so.x.toFixed(3) + 'em');
+      this.path.setAttribute('stroke-dashoffset', (1 - k).toFixed(3));
+      const b = this.burst;
+      this.rays.forEach((r, i) => { if (b < 0) { r.style.opacity = 0; return; } const u = clamp(b / .38), ang = i * 45 + 22.5;
+        r.style.opacity = 1 - u; r.style.transform = `rotate(${ang}deg) translateY(${(1.15 + u * .9).toFixed(3)}em) scaleY(${(1 - .6 * u).toFixed(3)})`; }); }
+    label() { return this.on ? (this.ink.x > .97 ? 'In <em>✓</em>' : 'Stamp!') : (this.ink.x < .03 ? 'Out' : 'Lift!'); }
+  }
+
+  /* ---- Bounce ---- */
+  class Bounce {
+    constructor(container, hosts, inputs, size, zones, shaker) { this.c = container; this.size = size; this.hi = -1; this.prs = 0; this.time = 0; this.shaker = shaker;
+      this.sel = inputs.findIndex(i => i.checked); this.jump = null; this.land = -1;
+      this.layer = document.createElement('div'); this.layer.className = 'ballayer'; this.layer.style.fontSize = size + 'px';
+      this.layer.innerHTML = '<span class="shadowdot"></span><span class="ripple"></span><span class="ball"></span>'; container.appendChild(this.layer);
+      this.ball = this.layer.querySelector('.ball'); this.rip = this.layer.querySelector('.ripple'); this.shd = this.layer.querySelector('.shadowdot');
+      this.items = inputs.map((inp, i) => { const el = document.createElement('span'); el.className = 'ctl rd'; el.style.fontSize = size + 'px';
+        el.innerHTML = '<span class="rd-ring"></span>'; el.appendChild(inp); hosts[i].appendChild(el);
+        const z = zones ? zones[i] : el;
+        z.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') this.hi = i; });
+        z.addEventListener('pointerleave', () => { if (this.hi === i) this.hi = -1; this.prs = 0; });
+        z.addEventListener('pointerdown', () => this.prs = 1);
+        inp.addEventListener('focus', () => { if (inp.matches(':focus-visible')) this.hi = i; });
+        inp.addEventListener('blur', () => { if (this.hi === i) this.hi = -1; });
+        inp.addEventListener('change', () => { if (inp.checked) this.select(i); });
+        return { el, ring: el.querySelector('.rd-ring'), rs: new Sp(1, 600, 14) }; });
+      addEventListener('pointerup', () => this.prs = 0); this.hop = new Sp(0, 300, 10); }
+    centre(i) { const a = this.items[i].el.getBoundingClientRect(), b = this.c.getBoundingClientRect(); return { x: a.left - b.left + a.width / 2, y: a.top - b.top + a.height / 2 }; }
+    select(i) { if (i === this.sel && !this.jump) return; const from = this.jump ? this.pos : this.centre(this.sel); this.sel = i; this.jump = { from, to: this.centre(i), t: 0, dur: .46 }; }
+    tick(h) { this.time += h;
+      if (this.jump) { this.jump.t += h; if (this.jump.t >= this.jump.dur) { this.jump = null; this.land = 0; this.items[this.sel].rs.x = .82; this.items[this.sel].rs.v = 0; if (this.shaker) shake(this.shaker); } }
+      if (this.land >= 0) { this.land += h; if (this.land > .5) this.land = -1; }
+      this.items.forEach((it, i) => { it.rs.t = this.hi === i && i !== this.sel ? (this.prs ? 1.02 : 1.12) : 1; it.rs.step(h); });
+      this.hop.t = this.hi >= 0 && !this.jump ? 1 : 0; this.hop.step(h); }
+    render() { const em = this.size, br = .75 * em;
+      let p, sx = 1, sy = 1, lift = 0;
+      if (this.jump) { const j = this.jump, u = clamp(j.t / j.dur), d = Math.hypot(j.to.x - j.from.x, j.to.y - j.from.y);
+        const peak = Math.max(1.4 * em, d * .55); p = { x: lerp(j.from.x, j.to.x, u), y: lerp(j.from.y, j.to.y, u) }; lift = 4 * u * (1 - u) * peak;
+        const vert = Math.abs(j.to.y - j.from.y) > Math.abs(j.to.x - j.from.x);
+        if (vert) { p.x += lift * .9; lift *= .25; }
+        const s = u < .15 ? 1 - .4 * Math.sin(Math.PI * u / .15) * .5 : u > .85 ? 1 - .4 * Math.sin(Math.PI * (1 - u) / .15) * .5 : 1;
+        const st = Math.sin(Math.PI * u) * .25; sx = (2 - s) * (1 - st * .4); sy = s * (1 + st); }
+      else { p = this.centre(this.sel); const hb = this.hop.x * (.5 + .5 * Math.abs(Math.sin(this.time * 8))) * .45 * em; lift = this.hi >= 0 && this.hi !== this.sel ? hb : this.hop.x * .1 * em;
+        if (this.land >= 0) { const u = clamp(this.land / .22); sy = 1 - .4 * Math.sin(Math.PI * u); sx = 1 + .35 * Math.sin(Math.PI * u); } }
+      this.pos = p;
+      Object.assign(this.ball.style, { width: br + 'px', height: br + 'px', transform: `translate(${p.x - br / 2}px, ${p.y - br / 2 - lift}px) scale(${sx.toFixed(3)}, ${sy.toFixed(3)})`, transformOrigin: '50% 100%' });
+      const ss = clamp(1 - lift / (2 * em), .3, 1);
+      Object.assign(this.shd.style, { width: br * ss + 'px', height: br * .35 * ss + 'px', transform: `translate(${p.x - br * ss / 2}px, ${p.y + br * .25}px)`, opacity: lift > 1 ? .9 : 0 });
+      if (this.land >= 0) { const u = clamp(this.land / .45), rr = (1.6 + u * 1.6) * em; const c = this.centre(this.sel);
+        Object.assign(this.rip.style, { width: rr + 'px', height: rr + 'px', transform: `translate(${c.x - rr / 2}px, ${c.y - rr / 2}px)`, opacity: 1 - u }); } else this.rip.style.opacity = 0;
+      this.items.forEach(it => it.ring.style.setProperty('--rs', it.rs.x.toFixed(3))); }
+  }
+
+  /* ---- build ---- */
+  const mk = (type, id, checked, name) => { const i = document.createElement('input'); i.type = type; i.id = id; if (name) i.name = name; i.checked = !!checked; return i; };
+  const cards = [...document.querySelectorAll('.card')];
+  const swStage = document.getElementById('sw-stage');
+  const swHero = new Slam(swStage, swStage, mk('checkbox', 'sw-hero', false), 46, cards[0]); swStage.insertBefore(swHero.el, swStage.firstChild);
+  const swList = document.getElementById('sw-list');
+  const swRows = [['Turbo', 'Max output, no limits', 1], ['Auto-replay', 'Run it back', 0], ['Crowd noise', 'Stadium mode', 0]].map(([t, s, c], i) => {
+    const li = document.createElement('li'); li.innerHTML = `<label class="row"><span class="txt">${t}<small>${s}</small></span></label>`; swList.appendChild(li);
+    return new Slam(li.firstChild, li.firstChild, mk('checkbox', 'sw' + i, c), 16, li.firstChild); });
+
+  const cbStage = document.getElementById('cb-stage');
+  const cbHero = new Stamp(cbStage, cbStage, mk('checkbox', 'cb-hero', false), 72, cards[1]); cbStage.insertBefore(cbHero.el, cbStage.firstChild);
+  const cbList = document.getElementById('cb-list');
+  const cbRows = [['Warm-up', '10 min, every session', 1], ['Sprints', '6 × 200 m', 0], ['Cool-down', 'Stretch it out', 1]].map(([t, s, c], i) => {
+    const li = document.createElement('li'); li.innerHTML = `<label class="row"><span class="txt">${t}<small>${s}</small></span></label>`; cbList.appendChild(li);
+    const ck = new Stamp(li.firstChild, li.firstChild, mk('checkbox', 'cb' + i, c), 16, li.firstChild); li.firstChild.insertBefore(ck.el, li.firstChild.firstChild); return ck; });
+
+  const rdStage = document.getElementById('rd-stage');
+  const hrow = document.createElement('div'); hrow.style.cssText = 'display:flex;gap:84px;align-items:center;position:relative'; rdStage.insertBefore(hrow, rdStage.firstChild);
+  const PACE = ['Easy', 'Tempo', 'Race'];
+  const hh = PACE.map(n => { const w = document.createElement('span'); w.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:14px';
+    const slot = document.createElement('span'); w.appendChild(slot); const t = document.createElement('span'); t.textContent = n; t.style.cssText = 'font:400 20px var(--display);text-transform:uppercase'; w.appendChild(t); hrow.appendChild(w); return slot; });
+  const hIn = PACE.map((n, i) => { const x = mk('radio', 'rdh' + i, i === 0, 'pace-hero'); x.setAttribute('aria-label', n); return x; });
+  const rdHero = new Bounce(rdStage, hh, hIn, 40, null, cards[2]);
+  const rdList = document.getElementById('rd-list'); const rows = [], slots = [];
+  [['Easy', 'Talk the whole way'], ['Tempo', 'Comfortably hard'], ['Race', 'Everything you have']].forEach(([t, s], i) => {
+    const li = document.createElement('li'); li.innerHTML = `<label class="row" for="rd${i}"><span class="slot"></span><span class="txt">${t}<small>${s}</small></span></label>`; rdList.appendChild(li);
+    rows.push(li.firstChild); slots.push(li.querySelector('.slot')); });
+  const rdL = new Bounce(rdList, slots, [0, 1, 2].map(i => mk('radio', 'rd' + i, i === 1, 'pace')), 16, rows, null);
+
+  const comps = [swHero, ...swRows, cbHero, ...cbRows, rdHero, rdL];
+  const st = { sw: document.getElementById('sw-state'), cb: document.getElementById('cb-state'), rd: document.getElementById('rd-state') };
+  document.getElementById('speed').onclick = e => { S.speed = S.speed === 1 ? .25 : 1; e.currentTarget.setAttribute('aria-pressed', S.speed !== 1); };
+  let last = performance.now(); const STEP = 1 / 240;
+  function frame(now) { const dt = Math.min(.05, (now - last) / 1000) * S.speed; last = now; const n = Math.max(1, Math.ceil(dt / STEP)), h = dt / n;
+    for (let i = 0; i < n; i++) for (const c of comps) c.tick(h);
+    for (const c of comps) c.render();
+    st.sw.innerHTML = swHero.label(); st.cb.innerHTML = cbHero.label(); st.rd.innerHTML = rdHero.jump ? 'Jump!' : PACE[rdHero.sel];
+    requestAnimationFrame(frame); }
+  requestAnimationFrame(frame);
+  const fire = (inp, v) => { inp.checked = v; inp.dispatchEvent(new Event('change')); };
+  setTimeout(() => fire(swHero.input, true), 700); setTimeout(() => fire(cbHero.input, true), 1200); setTimeout(() => fire(hIn[2], true), 1700);
+})();
+</script>
+
+</body>
+</html>
